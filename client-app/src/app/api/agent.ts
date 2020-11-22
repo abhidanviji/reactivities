@@ -3,24 +3,28 @@ import { IActivity } from "../models/activity";
 import { history } from "../..";
 import { toast } from "react-toastify";
 import { IUser, IUserFormValues } from "../models/user";
+import { IProfile } from "../models/profile";
 
 axios.defaults.baseURL = "http://localhost:5000/api";
 
-axios.interceptors.request.use(config => {
-  const token = window.localStorage.getItem('jwt');
-  if(token){
-    config.headers.Authorization = `Bearer ${token}`;
+axios.interceptors.request.use(
+  (config) => {
+    const token = window.localStorage.getItem("jwt");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-}, error => {
-  return Promise.reject(error);
-})
+);
 
 axios.interceptors.response.use(undefined, (error) => {
   if (error.message === "Network Error" && !error.response) {
     toast.error("Network error - make sure API is running!");
   }
-  
+
   const { status, data, config } = error.response;
   if (status === 404) {
     history.push("/notfound");
@@ -65,16 +69,24 @@ const Activities = {
     requests.put(`/activities/${activity.id}`, activity),
   delete: (id: string) => requests.del(`/activities/${id}`),
   attend: (id: string) => requests.post(`/activities/${id}/attend`, {}),
-  unattend: (id: string) => requests.del(`/activities/${id}/attend`)
+  unattend: (id: string) => requests.del(`/activities/${id}/attend`),
 };
 
 const User = {
-  current: ():Promise<IUser> => requests.get('/user'),
-  login: (user: IUserFormValues): Promise<IUser> => requests.post(`/user/login`, user),
-  register: (user: IUserFormValues): Promise<IUser> => requests.post(`/user/register`, user)
+  current: (): Promise<IUser> => requests.get("/user"),
+  login: (user: IUserFormValues): Promise<IUser> =>
+    requests.post(`/user/login`, user),
+  register: (user: IUserFormValues): Promise<IUser> =>
+    requests.post(`/user/register`, user),
+};
+
+const Profiles = {
+  get: (username: string): Promise<IProfile> =>
+    requests.get(`/profiles/${username}`),
 };
 
 export default {
   Activities,
-  User
+  User,
+  Profiles,
 };
